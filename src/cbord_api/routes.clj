@@ -9,6 +9,8 @@
             [clojure.tools.logging :refer [info error]]
             [slingshot.slingshot :refer [try+]]))
 
+(def debug false)
+
 (defn- res
   "Creates a Ring response map with the parameter status and body"
   [status body]
@@ -97,13 +99,16 @@
               (handler req))
             (res 401 {:status "login timed out"}))))))
 
+(defn- not-found-handler
+  []
+  (res 404 {:status "not found"}))
 
 (defroutes ^{:private true} all-routes
   (POST "/login" req (login-handler req))
   (GET "/balances" req (balances-handler req))
   (POST "/all" req (all-handler req))
-  (POST "/debug" req (res 200 {:status "suh"}))
-  (not-found (res 404 {:status "not found"})))
+  (POST "/debug" req (if debug (res 200 (str req)) (not-found-handler)))
+  (not-found (not-found-handler)))
 
 
 (def cbord-api-routes
