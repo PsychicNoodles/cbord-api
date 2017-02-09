@@ -1,0 +1,88 @@
+(ns cbord-api.api
+  (:gen-class)
+  (:require [clj-http.client :as client]
+            [net.cgrand.enlive-html :as html]
+            [clojure.string :as string]
+            [slingshot.slingshot :refer [throw+]]))
+
+(def institution "grinnell")
+
+(def base-url (format "https://get.cbord.com/%s/full/" institution))
+
+(defn- check-timed-out
+  [res]
+  (if
+    (and (= (:status res) 302)
+         (= (get (:headers res) "Location") "login.php"))
+    (throw+ {:type :timeout :res res})
+    res))
+
+(defn- html-first-val
+  [res selector]
+  (-> res
+      check-timed-out
+      :body
+      html/html-snippet
+      (html/select selector)
+      first
+      :attrs
+      :value))
+
+(defn- get-form-token
+  [cs]
+  (html-first-val (client/get (str base-url "login.php")
+                              {:cookie-store cs})
+                  [[:input (html/attr= :name "formToken")]]))
+
+
+(defn- send-login
+  "Returns true when successful and false otherwise"
+  [cs token username password]
+  (let [res (client/post (str base-url "login.php")
+                         {:form-params {:formToken token
+                                        :username username
+                                        :password password
+                                        :submit "Login"}
+                          :cookie-store cs})]
+    (check-timed-out res)
+    (and
+      (= (:status res) 302)
+      (= (-> res
+             (:headers)
+             (get "Location"))
+         "index.php"))))
+
+(defn login
+  [username password]
+  (let [cs (clj-http.cookies/cookie-store)
+        form-token (get-form-token cs)]
+    (if (send-login cs form-token username password)
+      cs)))
+
+(defn- get-balances-token
+  [cs]
+  (let [res (client/get (str base-url "funds_home.php")
+                        {:cookie-store cs})]
+    (check-timed-out res)
+    {:user-id (re-find #"(?<=getOverview\(\")[a-zA-Z0-9-]+" (:body res))
+     :form-token (html-first-val res
+                                 [[:#address_popup_select_address_form]
+                                  [:input (html/attr= :name "formToken")]])}))
+
+(defn get-balances
+  ([cs]
+   (let [{:keys [user-id form-token]} (get-balances-token cs)]
+    (get-balances cs user-id form-token)))
+  ([cs user-id form-token]
+   (zipmap [:meals :campus :dining :guest]
+           (drop 1
+             (map (comp str first :content)
+               (->
+                (client/post (str base-url "funds_overview_partial.php")
+                             {:form-params {:userId user-id
+                                            :formToken form-token}
+                              :cookie-store cs})
+                check-timed-out
+                :body
+                html/html-snippet
+                (html/select [:.balance])))))))
