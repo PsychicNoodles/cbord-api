@@ -17,31 +17,34 @@
 
 (def regions-height "The height of the regions" 17)
 
+(def regions-rect (Rectangle. regions-left regions-top regions-width regions-height))
+
 (def regions-count "The max number of regions" 36)
 
 (def max-retries
   "The number of retries to resolve Scratch file or COSStream errors"
   3)
 
+(defn- setup-regions
+  [stripper base-rect name]
+  (dotimes [n regions-count]
+    (let [copy (.clone base-rect)]
+      (.translate copy 0 (* regions-height n))
+      (.addRegion stripper (str name n) copy))))
+
 (defn- extract-page
-  [page stripper]
+  [page stripper name]
   (.extractRegions stripper page)
-  (map #(.getTextForRegion stripper (str %)) (range regions-count)))
+  (map #(.getTextForRegion stripper (str name %)) (range regions-count)))
 
 (defn- extract-all
-  [input stripper]
+  [input stripper name]
   (with-open [pdf (PDDocument/load input)]
-    (doall (map #(extract-page % stripper) (.getPages pdf)))))
+    (doall (map #(extract-page % stripper name) (.getPages pdf)))))
 
 (defn extract-pdf
   [input]
   (try+
    (let [stripper (PDFTextStripperByArea.)]
-     (doseq [n (range regions-count)]
-       (.addRegion stripper
-                   (str n)
-                   (Rectangle. regions-left
-                               (+ regions-top (* regions-height n))
-                               regions-width
-                               regions-height)))
-     (extract-all input stripper))))
+     (setup-regions stripper regions-rect "regions")
+     (extract-all input stripper "regions"))))
