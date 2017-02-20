@@ -1,5 +1,6 @@
 (ns cbord-api.pdf
   (:require [clj-http.client :as client]
+            [clojure.string :as str]
             [clojure.tools.logging :refer [info error]]
             [clojure.java.io :as io]
             [slingshot.slingshot :refer [try+ throw+]])
@@ -61,7 +62,8 @@
 (defn- extract-page
   [page stripper name]
   (.extractRegions stripper page)
-  (map #(.getTextForRegion stripper (str name %)) (range regions-count)))
+  (map #(str/trim-newline (.getTextForRegion stripper (str name %)))
+       (range regions-count)))
 
 (defn- extract-all
   [pdf stripper name]
@@ -69,7 +71,7 @@
 
 (defn- merge-in-page
   [acct dt act amt]
-  (remove #(= (:acct %) "\n")
+  (remove (comp str/blank? :acct)
     (map #(hash-map :acct %1 :dt %2 :act %3 :amt %4) acct dt act amt)))
 
 (defn extract-pdf
