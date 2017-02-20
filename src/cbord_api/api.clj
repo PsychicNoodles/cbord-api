@@ -25,7 +25,7 @@
 
 (def transaction-pdf-url-fmt
   "The URL for requesting a transactions pdf"
-  (str (format base-url institution) "historyPDF.php/dateS=%s&dateE=%s"))
+  (str (format base-url institution) "historyPDF.php?dateS=%s&dateE=%s"))
 
 (defn- check-timed-out
   [res]
@@ -110,11 +110,13 @@
   (.format transaction-date-format (java.util.Date.)))
 
 (defn get-transactions
-  [cs & {:keys [limit start end flatten]
-         :or {limit -1 start transaction-start-date
-              end (today-fmt) flatten false}}]
+  [cs & {:keys [start end flat]
+         :or {start transaction-start-date
+              end (today-fmt) flat false}}]
   (let [res (check-timed-out (client/get
                                (format transaction-pdf-url-fmt start end)
                                {:cookie-store cs :as :stream}))
-        pdf (pdf/extract-pdf (:body res))]
-    pdf))
+        trans (pdf/extract-pdf (:body res))]
+      (if flat
+        (flatten trans)
+        trans)))

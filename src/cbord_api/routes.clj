@@ -70,15 +70,20 @@
 (def
   ^{:private true
     :doc "Attempts to load the user's transactions using the cookies associated
-          with the parameter username. Can also limit the number of items
-          returned and change the start and end date ranges"}
+          with the parameter username. Can also change the start and end date
+          ranges and flatten the date separated results"}
   transactions-handler
   (wrap-logging
     "transactions"
-    (fn [{{:keys [username limit start end flatten]} :params}]
+    (fn [{{:keys [username start end flat]} :params}]
       (if-let [cs (get @login-cookies username)]
-        (res 200 (api/get-transactions cs :limit limit :start start
-                                          :end end :flatten flatten))
+        (do
+          (info (into {} (remove (comp nil? second))
+                      {:start start :end end :flat flat}))
+          (res 200 (apply api/get-transactions
+                          cs
+                          (flatten (remove (comp nil? second)
+                                           {:start start :end end :flat flat})))))
         (res 401 {:status "not authorized/logged in"})))))
 
 (def
