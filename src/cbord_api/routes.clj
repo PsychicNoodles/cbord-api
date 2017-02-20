@@ -69,6 +69,20 @@
 
 (def
   ^{:private true
+    :doc "Attempts to load the user's transactions using the cookies associated
+          with the parameter username. Can also limit the number of items
+          returned and change the start and end date ranges"}
+  transactions-handler
+  (wrap-logging
+    "transactions"
+    (fn [{{:keys [username limit start end flatten]} :params}]
+      (if-let [cs (get @login-cookies username)]
+        (res 200 (api/get-transactions cs :limit limit :start start
+                                          :end end :flatten flatten))
+        (res 401 {:status "not authorized/logged in"})))))
+
+(def
+  ^{:private true
     :doc "Attempts to login the user (if not already) and load balances"}
   all-handler
   (wrap-logging
@@ -106,6 +120,7 @@
 (defroutes ^{:private true} all-routes
   (POST "/login" req (login-handler req))
   (GET "/balances" req (balances-handler req))
+  (GET "/transactions" req (transactions-handler req))
   (POST "/all" req (all-handler req))
   (POST "/debug" req (if debug (res 200 (str req)) (not-found-handler)))
   (not-found (not-found-handler)))

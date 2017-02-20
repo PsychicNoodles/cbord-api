@@ -37,6 +37,7 @@ Note: in the future, this will chain with other calls that use the GET method, s
 
 ## To be implemented
 
+* adjust usage of check-timed-out to be inline
 * tests
 
 * better implementation of login session cache

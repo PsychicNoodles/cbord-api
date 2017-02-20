@@ -1,13 +1,31 @@
 (ns cbord-api.api
   (:gen-class)
-  (:require [clj-http.client :as client]
+  (:require [cbord-api.pdf :as pdf]
+            [clj-http.client :as client]
             [net.cgrand.enlive-html :as html]
             [clojure.string :as string]
+            [clojure.java.io :refer [as-url]]
             [slingshot.slingshot :refer [throw+]]))
 
 (def institution "grinnell")
 
 (def base-url (format "https://get.cbord.com/%s/full/" institution))
+
+(def transaction-start-date
+  "The default start date for the 2016-17 year"
+  "2016-08-09")
+
+(def transaction-date-format
+  "The format required for dates when getting a transactions pdf"
+  (java.text.SimpleDateFormat. "yyyy-MM-dd"))
+
+(def transaction-date-regex
+  "A regex for the required format for dates when getting a transactions pdf"
+  #"\d{4}-\d{2}-\d{2}")
+
+(def transaction-pdf-url-fmt
+  "The URL for requesting a transactions pdf"
+  (str (format base-url institution) "historyPDF.php/dateS=%s&dateE=%s"))
 
 (defn- check-timed-out
   [res]
@@ -86,3 +104,17 @@
                 :body
                 html/html-snippet
                 (html/select [:.balance])))))))
+
+(defn- today-fmt
+  []
+  (.format transaction-date-format (java.util.Date.)))
+
+(defn get-transactions
+  [cs & {:keys [limit start end flatten]
+         :or {limit -1 start transaction-start-date
+              end (today-fmt) flatten false}}]
+  (let [res (check-timed-out (client/get
+                               (format transaction-pdf-url-fmt start end)
+                               {:cookie-store cs :as :stream}))
+        pdf (pdf/extract-pdf (:body res))]
+    pdf))
