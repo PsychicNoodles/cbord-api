@@ -77,13 +77,10 @@
     "transactions"
     (fn [{{:keys [username start end flat]} :params}]
       (if-let [cs (get @login-cookies username)]
-        (do
-          (info (into {} (remove (comp nil? second))
-                      {:start start :end end :flat flat}))
-          (res 200 (apply api/get-transactions
-                          cs
-                          (flatten (remove (comp nil? second)
-                                           {:start start :end end :flat flat})))))
+        (res 200 (apply api/get-transactions
+                        cs
+                        (flatten (remove (comp nil? second)
+                                         {:start start :end end :flat flat}))))
         (res 401 {:status "not authorized/logged in"})))))
 
 (def
@@ -94,7 +91,6 @@
     "all"
     (fn [req]
       (let [login-res (login-handler req)]
-        (info (str "login-res: " login-res))
         (if (is-error login-res)
           login-res
           (balances-handler req))))))
