@@ -24,9 +24,17 @@ Note: in the future, the cache will invalidate and remove old items to prevent e
 
 Checks the user's balances, returning an object with `meals`, `campus`, `dining`, and `guest` values corresponding to those balances.
 
-### POST /all [username] [password]
+### GET /transactions [username] [optional - start] [optional - end] [optional - flat]
 
-Performs, in order, the `login`, `balances`, and transactions requests and returns the combined result.
+Checks the user's transaction history, returning the `account`, `datetime`, `activity`, and `amount` for each item. Each "page", which is typically delimited by day, is separated into an array.
+
+Optionally, can get values only in the start and end date range (the format is `yyyy-MM-dd` ie. `2017-02-12`) or flatten the pages into one array.
+
+### POST /all [username] [password] [optional - routes ...]
+
+Performs, in order, the `login`, `balances`, and `transactions` requests and returns the combined result.
+
+Optionally, will only run the routes specified by the `routes` parameter, which should be sent either as a form array or a repeated query string (ie. `?routes=login&routes=balances` will only run login and balances).
 
 ## Features
 
