@@ -85,7 +85,9 @@
         (res 401 {:status "not authorized/logged in"})))))
 
 (def handlers "A list of all the handlers"
-  [login-handler balances-handler transactions-handler])
+  {"login" login-handler
+   "balances" balances-handler
+   "transactions" transactions-handler})
 
 (defn lazy-juxt
   "Source: http://stackoverflow.com/q/10049925"
@@ -100,9 +102,13 @@
   (wrap-logging
     "all"
     (fn [req]
-      (let [results (take-while (complement is-error)
-                                ((apply lazy-juxt handlers) req))]
-        (if (= (count results) (count handlers))
+      (let [routes (:routes (:params req))
+            hdls (if (nil? routes)
+                    (vals handlers)
+                    (map (partial get handlers) routes))
+            results (take-while (complement is-error)
+                                ((apply lazy-juxt hdls) req))]
+        (if (= (count results) (count hdls))
           (res 200 (into {} (map :body results)))
           (last results))))))
 
