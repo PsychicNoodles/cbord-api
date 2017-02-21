@@ -72,7 +72,8 @@
 (defn- merge-in-page
   [acct dt act amt]
   (remove (comp str/blank? :acct)
-    (map #(hash-map :acct %1 :dt %2 :act %3 :amt %4) acct dt act amt)))
+    (map #(hash-map :account %1 :datetime %2 :activity %3 :amount %4)
+         acct dt act amt)))
 
 (defn extract-pdf
   [input]
