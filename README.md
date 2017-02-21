@@ -26,14 +26,13 @@ Checks the user's balances, returning an object with `meals`, `campus`, `dining`
 
 ### POST /all [username] [password]
 
-Performs, in order, the `login` and `balances` requests and returns the combined result.
-
-Note: in the future, this will chain with other calls that use the GET method, such as recent transactions.
+Performs, in order, the `login`, `balances`, and transactions requests and returns the combined result.
 
 ## Features
 
 * login
 * current balance
+* full transaction history
 
 ## To be implemented
 
@@ -41,8 +40,6 @@ Note: in the future, this will chain with other calls that use the GET method, s
 * tests
 
 * better implementation of login session cache
-* recent transactions
-* full transaction history
 * HTTPS
 * adding funds
 * adding credit card

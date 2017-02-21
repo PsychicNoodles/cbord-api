@@ -77,11 +77,21 @@
     "transactions"
     (fn [{{:keys [username start end flat]} :params}]
       (if-let [cs (get @login-cookies username)]
-        (res 200 (apply api/get-transactions
-                        cs
-                        (flatten (remove (comp nil? second)
-                                         {:start start :end end :flat flat}))))
+        (res 200 {:transactions (apply api/get-transactions
+                                       cs
+                                       (flatten (remove (comp nil? second)
+                                                        {:start start :end end
+                                                         :flat flat})))})
         (res 401 {:status "not authorized/logged in"})))))
+
+(def handlers "A list of all the handlers"
+  [login-handler balances-handler transactions-handler])
+
+(defn lazy-juxt
+  "Source: http://stackoverflow.com/q/10049925"
+  [& funs]
+  (fn [& args]
+    (map apply funs (repeat args))))
 
 (def
   ^{:private true
@@ -90,10 +100,11 @@
   (wrap-logging
     "all"
     (fn [req]
-      (let [login-res (login-handler req)]
-        (if (is-error login-res)
-          login-res
-          (balances-handler req))))))
+      (let [results (take-while (complement is-error)
+                                ((apply lazy-juxt handlers) req))]
+        (if (= (count results) (count handlers))
+          (res 200 (into {} (map :body results)))
+          (last results))))))
 
 (defn wrap-timeout-handling
   "Returns a handler that catches a timeout exception from the handler. If such
