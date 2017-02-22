@@ -13,7 +13,10 @@
                  [ring/ring-json "0.4.0"]
                  [org.clojure/tools.logging "0.3.1"]
                  [ring-logger "0.7.7"]
-                 [pdfboxing "0.1.11"]]
+                 [pdfboxing "0.1.11"]
+                 [environ "1.1.0"]]
+  :min-lein-version "2.5.1"
   :main ^:skip-aot cbord-api.core
   :target-path "target/%s"
+  :uberjar-name "cbord-api.jar"
   :profiles {:uberjar {:aot :all}})
