@@ -1,0 +1,5 @@
+{
+  "name": "cbord-api",
+  "description": "Provides access to the CBORD Get dining services web application through JSON for easier development of scripts and apps.",
+  "image": "heroku/clojure"
+}
