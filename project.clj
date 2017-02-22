@@ -18,4 +18,5 @@
   :min-lein-version "2.5.1"
   :main ^:skip-aot cbord-api.core
   :target-path "target/%s"
+  :uberjar-name "cbord-api.jar"
   :profiles {:uberjar {:aot :all}})
