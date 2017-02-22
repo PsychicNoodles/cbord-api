@@ -71,7 +71,7 @@
 
 (defn- merge-in-page
   [acct dt act amt]
-  (remove (comp str/blank? :acct)
+  (remove (comp str/blank? :account)
     (map #(hash-map :account %1 :datetime %2 :activity %3 :amount %4)
          acct dt act amt)))
 
