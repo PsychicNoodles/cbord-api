@@ -14,6 +14,7 @@
                  [org.clojure/tools.logging "0.3.1"]
                  [ring-logger "0.7.7"]
                  [pdfboxing "0.1.11"]
+                 [expiring-map "0.1.7"]
                  [environ "1.1.0"]]
   :min-lein-version "2.5.1"
   :main ^:skip-aot cbord-api.core
