@@ -49,8 +49,6 @@ Optionally, will only run the routes specified by the `routes` parameter, which 
 * adjust usage of check-timed-out to be inline
 * tests
 
-* better implementation of login session cache
-* HTTPS
 * adding funds
 * adding credit card
 
