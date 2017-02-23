@@ -1,5 +1,6 @@
 (ns cbord-api.routes
   (:require [cbord-api.api :as api]
+            [expiring-map.core :as em]
             [compojure.route :refer [not-found]]
             [compojure.core :refer [defroutes POST GET]]
             [ring.logger :refer [wrap-with-logger]]
@@ -37,8 +38,9 @@
           (info (str "succeeded " name " for " addr)))
         r))))
 
-
-(def ^{:private true} login-cookies (atom {}))
+(def ^{:private true} login-cookies
+  "A cache of login cookie stores that evicts after 30 minutes"
+  (em/expiring-map 30 {:time-unit :minutes}))
 
 (def
   ^{:private true
@@ -50,7 +52,7 @@
     (fn [{{:keys [username password]} :params}]
       (if-let [cs (api/login username password)]
         (do
-          (swap! login-cookies assoc username cs)
+          (em/assoc! login-cookies username cs)
           (res 200 {:status "ok"}))
         (do
           (res 401 {:status "login failed"}))))))
@@ -63,7 +65,7 @@
   (wrap-logging
     "balances"
     (fn [{{:keys [username]} :params}]
-      (if-let [cs (get @login-cookies username)]
+      (if-let [cs (get login-cookies username)]
         (res 200 (assoc (api/get-balances cs) :status "ok"))
         (res 401 {:status "not authorized/logged in"})))))
 
@@ -76,7 +78,7 @@
   (wrap-logging
     "transactions"
     (fn [{{:keys [username start end flat]} :params}]
-      (if-let [cs (get @login-cookies username)]
+      (if-let [cs (get login-cookies username)]
         (res 200 {:transactions (apply api/get-transactions
                                        cs
                                        (flatten (remove (comp nil? second)

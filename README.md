@@ -4,6 +4,8 @@ Provides access to the CBORD Get dining services web application through JSON fo
 
 This app uses a hard-coded value, "grinnell", to set the part of the URL that presumably refers to the institution. That is because I can't actually test any other possible institutions since I don't have normal access. If you wish to use this outside of Grinnell, feel free to change the `institution` value in `cbord-api.api`, just make sure to test it first.
 
+Note: this project uses the PDFBox library from Apache, which needs to build a font cache the first time the program is run on a system. Therefore, be sure to make at least one valid (ie. logged in) request to the `transactions` route so that it can go through this relatively long process.
+
 ## Endpoints
 
 On success, the status code will be 200 and the JSON's `status` value will be `ok`. Otherwise, the status code will be in the 400s and the `status` value will give a brief description of the problem.
