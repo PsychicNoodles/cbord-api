@@ -13,7 +13,7 @@
 
 (def transaction-start-date
   "The default start date for the 2016-17 year"
-  "2016-08-09")
+  "2016-09-17")
 
 (def transaction-date-format
   "The format required for dates when getting a transactions pdf"
