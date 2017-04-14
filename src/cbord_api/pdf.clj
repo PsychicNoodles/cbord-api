@@ -62,8 +62,8 @@
 (defn- extract-page
   [page stripper name]
   (.extractRegions stripper page)
-  (map #(str/trim-newline (.getTextForRegion stripper (str name %)))
-       (range regions-count)))
+  (doall (map #(str/trim-newline (.getTextForRegion stripper (str name %)))
+              (range regions-count))))
 
 (defn- extract-all
   [pdf stripper name]
