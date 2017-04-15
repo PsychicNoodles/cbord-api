@@ -5,27 +5,27 @@
             [net.cgrand.enlive-html :as html]
             [clojure.string :as string]
             [clojure.java.io :refer [as-url]]
+            [clj-time.core :as t]
+            [clj-time.format :as f]
             [slingshot.slingshot :refer [throw+]]))
 
 (def institution "grinnell")
 
 (def base-url (format "https://get.cbord.com/%s/full/" institution))
 
-(def transaction-start-date
-  "The default start date for the 2016-17 year"
-  "2016-09-17")
-
 (def transaction-date-format
   "The format required for dates when getting a transactions pdf"
-  (java.text.SimpleDateFormat. "yyyy-MM-dd"))
+  (f/formatter "yyyy-MM-dd"))
 
-(def transaction-date-regex
-  "A regex for the required format for dates when getting a transactions pdf"
-  #"\d{4}-\d{2}-\d{2}")
+(defn- transaction-start-date
+  "Today's date minus 3 months, which should encapsulate a full semester.
+   CBORD seems to return an error PDF when the difference in days reaches 209 for some reason."
+  []
+  (f/unparse-local transaction-date-format (t/minus (t/today) (t/months 3))))
 
 (def transaction-pdf-url-fmt
   "The URL for requesting a transactions pdf"
-  (str (format base-url institution) "historyPDF.php?dateS=%s&dateE=%s"))
+  (str base-url "historyPDF.php?dateS=%s&dateE=%s"))
 
 (defn- check-timed-out
   [res]
@@ -105,14 +105,11 @@
                 html/html-snippet
                 (html/select [:.balance])))))))
 
-(defn- today-fmt
-  []
-  (.format transaction-date-format (java.util.Date.)))
-
 (defn get-transactions
   [cs & {:keys [start end flat]
-         :or {start transaction-start-date
-              end (today-fmt) flat false}}]
+         :or {start (transaction-start-date)
+              end (f/unparse-local transaction-date-format (t/today))
+              flat false}}]
   (let [res (check-timed-out (client/get
                                (format transaction-pdf-url-fmt start end)
                                {:cookie-store cs :as :stream}))
